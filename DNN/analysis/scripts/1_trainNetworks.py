@@ -1,13 +1,20 @@
 import os
 import glob
 import sys
-sys.path.append('/mnt/HDD12TB/masterScripts/DNN')
+
+if os.uname().nodename == 'finn':
+    masterScriptsDir = '/mnt/HDD12TB/masterScripts'
+    datasetsDir = '/home/dave/Datasets'
+elif os.uname().nodename == 'u110380':
+    masterScriptsDir = '/home/exx/Dave/masterScripts'
+    datasetsDir = '/home/exx/Datasets'
+sys.path.append(f'{masterScriptsDir}/DNN')
 from train import train
 import time
 #time.sleep(18000)
 
 nGPUs = -1 # target number of GPUs. Overwritten for known 1 GPU networks, set as -1 for all.
-GPUids = 0 # specify GPUs to use if not all are/can be used
+GPUids = 1 # specify GPUs to use if not all are/can be used
 
 overwrite = False
 noise=False
@@ -23,6 +30,7 @@ occludersWithLevels = occluders
 for o in occludersNoLevels:
     occludersWithLevels.remove(o)
 
+'''
 config = {'allAlexnet': {'alexnet': {'imagenet16': {'occluders': occluders, 'coverages': indCoverages}}},
           'mixedTypesMixedLevels': {'vgg19': {'imagenet16': {'occluders': [occludersBehavioural], 'coverages': [indCoverages]}}},
           'mixedLevelsMixedBlur': {'alexnet': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}}},
@@ -47,10 +55,11 @@ config = {'allAlexnet': {'alexnet': {'imagenet16': {'occluders': occluders, 'cov
                              'vgg19': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
                              'inception_v3': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
                              'PredNetImageNet': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}}},
-          'cornet_s_varRec_2_2_4_2': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2]}}},
-          'cornet_s_varRec_3_3_6_3': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [3,3,6,3]}}},
-          'cornet_s_varRec_4_4_6_4': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [4,4,8,4]}}},
-          'cornet_s_varRec_5_5_10_5': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [5,5,10,5]}}}}
+                             '''
+config = {#'cornet_s_varRec_2_2_4_2': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2]}}},
+          #'cornet_s_varRec_3_3_6_3': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [3,3,6,3]}}},
+          #'cornet_s_varRec_4_4_6_4': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [4,4,8,4]}}},
+          'cornet_s_varRec_5_5_10_5': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['unoccluded'], 'coverages': [.5], 'times': [5,5,10,5]}}}}
 
 learningRate = .001
 optimizerName = 'SGD'
@@ -90,7 +99,7 @@ for analysis in config:
 
         for dataset in config[analysis][modelName]:
 
-            datasetPath = f'/home/dave/Datasets/{dataset}'
+            datasetPath = f'{datasetsDir}/{dataset}'
 
             times = None
             modelNameFull = modelName
@@ -132,7 +141,7 @@ for analysis in config:
                         restartFrom = None
 
                     # print out these values during training
-                    printOut = {'model': modelName,
+                    printOut = {'model': modelNameFull,
                                 'dataset': dataset,
                                 'occluder': occluder,
                                 'coverage': str(coverage)}
