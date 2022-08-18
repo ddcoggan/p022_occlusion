@@ -10,21 +10,25 @@ sys.path.append('/mnt/HDD12TB/masterScripts/DNN')
 from saveOutputs import saveOutputs
 transform = None
 overwrite = True
-versions = ['v3']
-models = ['cornet_s']#['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152'] #'alexnet', 'inception_v3', 'cornet_s', 'PredNetImageNet',
-trainsets = ['imagenet16'] #, 'places365_standard', 'imagenet16'],
+versions = ['v3'] # v1 = barHorz04, v2 = barVert12, v3 = barHorz08
+models = ['cornet_s_varRec']#['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152'] #'alexnet', 'inception_v3', 'cornet_s', 'PredNetImageNet',
+trainsets = ['imagenet1000'] #, 'places365_standard', 'imagenet16'],
 occludersNoLevels = ['unoccluded','naturalTextured','naturalTextured2']
 weights = 'final' # select which weights to use. 'final' is last training epoch. TODO 'maxEval' is epoch with highest evaluation performance.
 for version in versions:
 
-    occlusionTypes = ['unoccluded', 'naturalTextured']  # ['unoccluded', 'horzBars', 'polkadot', 'crossBars', 'dropout']
+    occlusionTypes = ['unoccluded']#, 'naturalTextured']  # ['unoccluded', 'horzBars', 'polkadot', 'crossBars', 'dropout']
     if version == 'v1':
         occlusionTypes.append('barHorz04')
     elif version == 'v2':
         occlusionTypes.append('barVert12')
     elif version == 'v3':
         occlusionTypes.append('barHorz08')
-    for model in models:
+    #for model in models:
+    for timesString in ['2_2_4_2', '5_5_10_5']:
+
+        times = [int(x) for x in timesString.split('_')]
+        model = models[0]
 
         for trainset in trainsets:
             datasetDir = f'/home/dave/Datasets/{trainset}'
@@ -33,14 +37,14 @@ for version in versions:
 
                 if occTypeTrain in occludersNoLevels:
                     coverageString = None
-                    modelDir = os.path.join('DNN/data', model, trainset, 'fromPretrained', occTypeTrain)
+                    modelDir = os.path.join('DNN/data', f'{model}_{timesString}', trainset, 'fromPretrained', occTypeTrain)
                 else:
-                    modelDir = os.path.join('DNN/data', model, trainset, 'fromPretrained', occTypeTrain, 'mixedLevels')
+                    modelDir = os.path.join('DNN/data', f'{model}_{timesString}', trainset, 'fromPretrained', occTypeTrain, '50')
 
                 paramsDir = os.path.join(modelDir, 'params')
 
                 if weights == 'final':
-                    paramsFile = sorted(glob.glob(os.path.join(paramsDir, '*.pt')))[-1]
+                    paramsFile = sorted(glob.glob(os.path.join(paramsDir, '*.pt')))[14]
 
                 imagesUnocc = sorted(glob.glob(f'fMRI/{version}/images/unoccluded/**/*.JPEG', recursive=True))
 
@@ -83,4 +87,4 @@ for version in versions:
                         print(f'{datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")} | Measuring responses |'
                               f' Model: {model} | Trained on: {trainset} | OccTypeTrain: {occTypeTrain} |'
                               f' version: {version} | image: {condNames[i]}')
-                        saveOutputs(model, trainset, paramsFile, imageFile, responsePath, transform)
+                        saveOutputs(model, trainset, paramsFile, imageFile, responsePath, transform, times=times)
