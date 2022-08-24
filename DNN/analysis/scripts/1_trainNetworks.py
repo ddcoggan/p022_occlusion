@@ -17,6 +17,7 @@ nGPUs = 1 # target number of GPUs. Overwritten for known 1 GPU networks, set as 
 GPUids = 1 # specify GPUs to use if not all are/can be used
 
 overwrite = False
+
 noise=False
 indCoverages = [.1,.2,.4,.8]
 occluders = []
@@ -29,6 +30,17 @@ occludersBehavioural = ['barHorz04', 'barVert04', 'barObl04', 'mudSplash', 'polk
 occludersWithLevels = occluders
 for o in occludersNoLevels:
     occludersWithLevels.remove(o)
+
+skipZeroth = False
+nEpochs = 25
+workers = 8
+pretrained = True
+colours = [(0,0,0),(127,127,127),(255,255,255)]
+invert=False
+propOccluded = 0.8
+cycles=3 # currently just for prednet
+momentum=.9 # currently just for prednet
+weight_decay=1e-4 # currently just for prednet
 
 '''
 config = {'allAlexnet': {'alexnet': {'imagenet16': {'occluders': occluders, 'coverages': indCoverages}}},
@@ -56,11 +68,10 @@ config = {'allAlexnet': {'alexnet': {'imagenet16': {'occluders': occluders, 'cov
                              'inception_v3': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
                              'PredNetImageNet': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}}},
                              '''
-config = {'cornet_s_varRec_varRF_2_2_4_2_-_4_4_12_4': {'cornet_s_varRec_varRF': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2], 'RF': [4,4,12,4]}}},
-          'cornet_s_varRec_2_2_4_2': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2]}}},
-          'cornet_s_varRec_5_5_10_5': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [5,5,10,5]}}},
-          'cornet_s_varRec_15_15_30_15': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2]}}}}
-
+config = {#'cornet_s_varRec_2_2_4_2': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2]}}},
+          #'cornet_s_varRec_5_5_10_5': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [5,5,10,5]}}},
+          #'cornet_s_varRec_1_1_1_1': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [1,1,1,1]}}}}
+          'cornet_s_varRec_varRF_2_2_4_2-3_3_3_3': {'cornet_s_varRec_varRF': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2], 'RF': [3,3,3,3]}}}}
 learningRate = .001
 optimizerName = 'SGD'
 batchSizes = {'alexnet': 1024,
@@ -75,17 +86,7 @@ batchSizes = {'alexnet': 1024,
               'resnet152': 64,
               'inception_v3': 32,
               'PredNetImageNet': 8}
-nEpochs = 32
-workers = 8
-pretrained = True
-colours = [(0,0,0),(127,127,127),(255,255,255)]
-invert=False
-propOccluded = 0.8
 
-# currently just for prednet
-cycles=3
-momentum=.9
-weight_decay=1e-4
 
 for analysis in config:
 
@@ -103,6 +104,7 @@ for analysis in config:
             datasetPath = f'{datasetsDir}/{dataset}'
 
             times = None
+            RF=None
             modelNameFull = modelName
             if modelName.startswith('cornet_s_varRec'):
                 times = config[analysis][modelName][dataset]['times']
@@ -187,5 +189,5 @@ for analysis in config:
                               RF=RF,
                               nGPUs=nGPUs,
                               GPUids=GPUids,
-                              )
+                              skipZeroth=skipZeroth)
 

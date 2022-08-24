@@ -9,7 +9,7 @@ import time
 sys.path.append('/mnt/HDD12TB/masterScripts/DNN')
 from saveOutputs import saveOutputs
 transform = None
-overwrite = True
+overwrite = False
 versions = ['v3'] # v1 = barHorz04, v2 = barVert12, v3 = barHorz08
 models = ['cornet_s_varRec']#['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152'] #'alexnet', 'inception_v3', 'cornet_s', 'PredNetImageNet',
 trainsets = ['imagenet1000'] #, 'places365_standard', 'imagenet16'],

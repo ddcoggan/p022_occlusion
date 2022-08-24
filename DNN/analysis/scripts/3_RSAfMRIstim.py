@@ -18,10 +18,11 @@ from saveOutputs import saveOutputs
 from centreCropResize import centreCropResize
 
 ### CONFIGURATION
-models = ['cornet_s']#['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'alexnet', 'cornet_s', 'inception_v3', 'vgg19', 'PredNetImageNet']
-datasets = ['imagenet16'] #, 'places365_standard', 'imagenet16'],
+models = ['cornet_s_varRec_2_2_4_2', 'cornet_s_varRec_5_5_10_5']#['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'alexnet', 'cornet_s', 'inception_v3', 'vgg19', 'PredNetImageNet']
+datasets = ['imagenet1000'] #, 'places365_standard', 'imagenet16'],
 weights = 'final' # select which weights to use. 'final' is last training epoch. TODO 'maxEval' is epoch with highest evaluation performance.
 versions = ['v3']
+coverage = '50' # 'mixedLevels'
 layers2use = ['V1','V2','V4','IT']
 exemplarNames = ['bear','bison','elephant','hare','jeep','lamp','sportsCar','teapot']
 
@@ -78,11 +79,13 @@ for version in versions:
     for cond in conds:
         condNames.append(f'{cond[0]}_{cond[1]}')
 
-    for norm in ['allConds', 'occluder']:
+    for norm in ['allConds']:#, 'occluder']:
         RSMs = {}
-        for model in models:
 
-            templateResponsePath = os.path.join('DNN/data', model, f'imagenet16/fromPretrained/unoccluded/responses/fMRIstim/{version}/bear_none.pkl')
+        allIdxPlot = np.empty(shape=(2,2,2,4))
+        for mod, model in enumerate(models):
+
+            templateResponsePath = os.path.join('DNN/data', model, f'{datasets[0]}/fromPretrained/unoccluded/responses/fMRIstim/{version}/bear_none.pkl')
             layers = list(pickle.load(open(templateResponsePath, 'rb')).keys())
 
             tableAll = pd.DataFrame({'layer': [], 'dataset': [], 'occluder': [], 'contrast': [], 'level': [], 'mean': [], 'sem': []})
@@ -95,10 +98,10 @@ for version in versions:
                     os.makedirs(analysisDir, exist_ok=True)
 
                     for occluder in occluders:
-                        if occluder in occludersNoLevels:
-                            modelDir = os.path.join('DNN/data', model, dataset, 'fromPretrained', occluder)
-                        else:
-                            modelDir = os.path.join('DNN/data', model, dataset, 'fromPretrained', occluder, 'mixedLevels')
+
+                        modelDir = os.path.join('DNN/data', model, dataset, 'fromPretrained', occluder)
+                        if occluder not in occludersNoLevels:
+                            modelDir = os.path.join(modelDir, coverage)
 
                         allResponses = []
                         responseDir = os.path.join(modelDir, f'responses/fMRIstim/{version}')
@@ -141,7 +144,7 @@ for version in versions:
                         fig.tight_layout()
                         outDir = f'{analysisDir}/RSMs'
                         os.makedirs(outDir, exist_ok=True)
-                        plt.savefig(f'{outDir}/{occluder}_{l}_{layer}.png')
+                        plt.savefig(f'{outDir}/{occluder}_{l}_{layer}.pdf')
                         plt.show()
                         plt.close()
 
@@ -279,7 +282,7 @@ for version in versions:
                     plt.tight_layout()
                     outDir = f'{analysisDir}/occluded'
                     os.makedirs(outDir, exist_ok=True)
-                    fig.savefig(os.path.join(outDir, f'{l}_{layer}.png'))
+                    fig.savefig(os.path.join(outDir, f'{l}_{layer}.pdf'))
                     plt.show()
                     plt.close()
 
@@ -290,7 +293,7 @@ for version in versions:
                     df['occluder'] = df['occluder'].astype('category').cat.reorder_categories(occluders)
                     dfMeans = df.pivot(index='occluder', columns='level', values='mean')
                     dfSEMs = df.pivot(index='occluder', columns='level', values='sem').values
-                    dfPlot = dfMeans.plot(kind='bar', yerr=dfSEMs.transpose(), ylabel='correlation (r)', rot=0, figsize=(6, 4))
+                    dfPlot = dfMeans.plot(kind='bar', yerr=dfSEMs.transpose(), ylabel='correlation (r)', rot=0, figsize=(6, 4), color=['tab:purple','tab:pink','tab:olive','tab:cyan'])
                     fig = dfPlot.get_figure()
                     plt.tick_params(direction='in')
                     plt.xticks(rotation=25, ha="right", rotation_mode="anchor")
@@ -300,7 +303,7 @@ for version in versions:
                     plt.tight_layout()
                     outDir = f'{analysisDir}/occVunocc'
                     os.makedirs(outDir, exist_ok=True)
-                    fig.savefig(os.path.join(outDir, f'{l}_{layer}.png'))
+                    fig.savefig(os.path.join(outDir, f'{l}_{layer}.pdf'))
                     plt.show()
                     plt.close()
 
@@ -335,7 +338,7 @@ for version in versions:
                     plt.tight_layout()
                     outDir = f'{analysisDir}/regression'
                     os.makedirs(outDir, exist_ok=True)
-                    plt.savefig(os.path.join(outDir, f'{l}_{layer}.png'))
+                    plt.savefig(os.path.join(outDir, f'{l}_{layer}.pdf'))
                     plt.show()
                     plt.close()
 
@@ -345,7 +348,7 @@ for version in versions:
             # plot results across layers:
             for dataset in datasets:
                 analysisDir = f'DNN/analysis/results/RSAfMRIstim/{version}/{model}/{dataset}/{norm}'
-                for occluder in occluders:
+                for occ, occluder in enumerate(occluders):
 
                     # 2x2 exemplar by occluder position (occluded images only)
                     df = tableAll.loc[(tableAll['dataset'] == dataset) &
@@ -356,17 +359,245 @@ for version in versions:
                     df['layer'] = df['layer'].astype('category').cat.reorder_categories(layers2use)
                     dfMeans = df.pivot(index='layer', columns='level', values='mean')
                     dfSEMs = df.pivot(index='layer', columns='level', values='sem').values
-                    dfPlot = dfMeans.plot(kind='bar', yerr=dfSEMs.transpose(), ylabel='correlation (r)', rot=0, figsize=(6, 2.5), width=.8)
-                    fig = dfPlot.get_figure()
+                    dfPlot = dfMeans.plot(kind='bar', yerr=dfSEMs.transpose(), ylabel='correlation (r)', rot=0, figsize=(3.5, 2.25), width=.8, legend=False)
+                    fig = plt.gcf()
+                    ax = plt.gca()
+                    ax.spines['top'].set_visible(False)
+                    ax.spines['right'].set_visible(False)
                     plt.tick_params(direction='in')
-                    plt.xticks(size= 10)
-                    plt.xlabel('model layer')
+                    plt.xticks(size= 12)
+                    plt.yticks(size=12)
+                    plt.xlabel('model layer', size = 12)
+                    plt.ylabel('correlation (r)', size=12)
                     plt.ylim((-.6, 1.1))
-                    plt.title(f'trained on {occluder}')
-                    plt.legend(title='', bbox_to_anchor=(1.04, 1), loc="upper left", frameon=False, fontsize=10)
+                    '''
+                    if occluder == 'unoccluded':
+                        plt.title(f'standard training', size=16)
+                    else:
+                        plt.title(f'occlusion trained', size=16)
+                    '''
+                    #plt.legend(title='', bbox_to_anchor=(1.04, 1), loc="upper left", frameon=False, fontsize=10)
                     plt.tight_layout()
                     outDir = f'{analysisDir}/occluded'
                     os.makedirs(outDir, exist_ok=True)
-                    fig.savefig(os.path.join(outDir, f'allLayers_{occluder}.png'))
+                    fig.savefig(os.path.join(outDir, f'allLayers_{occluder}.pdf'))
                     plt.show()
                     plt.close()
+
+                    # object completion index
+                    means, sems = [],[]
+                    for layer in layers2use:
+
+                        sameExemSameOcc = df['mean'][(df['layer'] == layer) &
+                                                     (df['level'] == 'sameExemSameOcc')].item()
+                        sameExemDiffOcc = df['mean'][(df['layer'] == layer) &
+                                                     (df['level'] == 'sameExemDiffOcc')].item()
+                        diffExemSameOcc = df['mean'][(df['layer'] == layer) &
+                                                     (df['level'] == 'diffExemSameOcc')].item()
+                        diffExemDiffOcc = df['mean'][(df['layer'] == layer) &
+                                                     (df['level'] == 'diffExemDiffOcc')].item()
+
+                        occEffect = sameExemSameOcc - sameExemDiffOcc
+                        exemEffect = (sameExemSameOcc + sameExemDiffOcc) - (diffExemSameOcc + diffExemDiffOcc)
+                        #objCompIdx = (exemEffect - occEffect) / (exemEffect + occEffect) # full completion = 1, no completion = 0
+                        #objCompIdx = (sameExemDiffOcc - diffExemSameOcc) / (np.abs(sameExemDiffOcc) + np.abs(diffExemSameOcc))
+                        #objCompIdx = (sameExemDiffOcc - diffExemDiffOcc) / (sameExemSameOcc - diffExemDiffOcc)
+                        objCompIdx = sameExemDiffOcc / sameExemSameOcc
+                        means.append(objCompIdx)
+
+                    objCompDF = pd.DataFrame({'layer': layers2use, 'mean': means})
+                    objCompPlot = objCompDF.plot(kind='line', linewidth=1.5, rot=0, legend=False, figsize=(2.5, 2.25), marker='o', markerfacecolor='white')
+                    fig = plt.gcf()
+                    ax = plt.gca()
+                    ax.spines['top'].set_visible(False)
+                    ax.spines['right'].set_visible(False)
+                    ax.fill_between(np.arange(len(layers2use)), 1, 2, color='black', alpha=.2, lw=0)
+                    plt.tick_params(direction='in')
+                    plt.xticks(np.arange(len(layers2use)), labels=layers2use, size=12)
+                    plt.yticks((-.5,0,.5,1), size=12)
+                    plt.xlabel('model layer', size = 12)
+                    plt.ylabel('OCI',size=12)
+                    plt.ylim((-.5, 1.))
+                    #plt.title('object completion', size=12)
+                    #plt.legend(title='', bbox_to_anchor=(1.04, 1), loc="upper left", frameon=False, fontsize=10)
+                    plt.tight_layout()
+                    outDir = f'{analysisDir}/occluded'
+                    os.makedirs(outDir, exist_ok=True)
+                    fig.savefig(os.path.join(outDir, f'allLayers_{occluder}_objCompIdx.pdf'), dpi = 300)
+                    plt.show()
+                    plt.close()
+
+                    allIdxPlot[0, mod, occ, :] = means
+
+                    # 2x2, exemplar by one occluded yes/no
+                    df = tableAll.loc[(tableAll['dataset'] == dataset) &
+                                      (tableAll['occluder'] == occluder) &
+                                      (tableAll['contrast'] == 'occVunocc') &
+                                      (tableAll['layer'].isin(layers2use)), :].copy()
+                    df['level'] = df['level'].astype('category').cat.reorder_categories(['sameExemBothUnocc', 'sameExemOneUnocc', 'diffExemBothUnocc', 'diffExemOneUnocc'])
+                    df['layer'] = df['layer'].astype('category').cat.reorder_categories(layers2use)
+                    dfMeans = df.pivot(index='layer', columns='level', values='mean')
+                    dfSEMs = df.pivot(index='layer', columns='level', values='sem').values
+                    dfPlot = dfMeans.plot(kind='bar', yerr=dfSEMs.transpose(), ylabel='correlation (r)', rot=0, figsize=(3.5, 2.25), width=.8, legend=False, color=['tab:purple','tab:pink','tab:olive','tab:cyan'])
+                    fig = plt.gcf()
+                    ax = plt.gca()
+                    ax.spines['top'].set_visible(False)
+                    ax.spines['right'].set_visible(False)
+                    plt.tick_params(direction='in')
+                    plt.xticks(size=12)
+                    plt.yticks(size=12)
+                    plt.xlabel('model layer', size=12)
+                    plt.ylabel('correlation (r)', size=12)
+                    plt.ylim((-.6, 1.1))
+                    '''
+                    if occluder == 'unoccluded':
+                        plt.title(f'standard training', size=16)
+                    else:
+                        plt.title(f'occlusion trained', size=16)
+                    '''
+                    #plt.legend(title='', bbox_to_anchor=(1.04, 1), loc="upper left", frameon=False, fontsize=10)
+                    plt.tight_layout()
+                    outDir = f'{analysisDir}/occVunocc'
+                    os.makedirs(outDir, exist_ok=True)
+                    fig.savefig(os.path.join(outDir, f'allLayers_{occluder}.pdf'))
+                    plt.show()
+                    plt.close()
+
+                    # occlusion invariance index
+                    means, sems = [], []
+                    for layer in layers2use:
+                        sameExemOneUnocc = df['mean'][(df['layer'] == layer) &
+                                                     (df['level'] == 'sameExemOneUnocc')].item()
+                        sameExemBothUnocc = df['mean'][(df['layer'] == layer) &
+                                                     (df['level'] == 'sameExemBothUnocc')].item()
+                        diffExemOneUnocc = df['mean'][(df['layer'] == layer) &
+                                                     (df['level'] == 'diffExemOneUnocc')].item()
+                        diffExemBothUnocc = df['mean'][(df['layer'] == layer) &
+                                                     (df['level'] == 'diffExemBothUnocc')].item()
+
+                        occEffect = sameExemSameOcc - sameExemDiffOcc
+                        exemEffect = (sameExemSameOcc + sameExemDiffOcc) - (diffExemSameOcc + diffExemDiffOcc)
+                        # objCompIdx = (exemEffect - occEffect) / (exemEffect + occEffect) # full completion = 1, no completion = 0
+                        # objCompIdx = (sameExemDiffOcc - diffExemSameOcc) / (np.abs(sameExemDiffOcc) + np.abs(diffExemSameOcc))
+                        #occInvIdx = (sameExemOneUnocc - diffExemOneUnocc) / (sameExemBothUnocc + diffExemBothUnocc)
+                        occInvIdx = sameExemOneUnocc / sameExemBothUnocc
+                        means.append(occInvIdx)
+
+                    objCompDF = pd.DataFrame({'layer': layers2use, 'mean': means})
+                    objCompPlot = objCompDF.plot(kind='line', linewidth=1.5, rot=0, legend=False, figsize=(2.5, 2.25), color = 'tab:purple', marker='o', markerfacecolor='white')
+                    fig = plt.gcf()
+                    ax = plt.gca()
+                    ax.spines['top'].set_visible(False)
+                    ax.spines['right'].set_visible(False)
+                    ax.fill_between(np.arange(len(layers2use)), 1, 2, color='black', alpha=.2, lw=0)
+                    plt.tick_params(direction='in')
+                    plt.xticks(np.arange(len(layers2use)), labels=layers2use, size=12)
+                    plt.yticks((-.5,0, .5, 1), size=12)
+                    plt.xlabel('model layer', size=12)
+                    plt.ylabel('OII', size=12)
+                    plt.ylim((-.5, 1.))
+                    #plt.title('occlusion invariance', size=12)
+                    # plt.legend(title='', bbox_to_anchor=(1.04, 1), loc="upper left", frameon=False, fontsize=10)
+                    plt.tight_layout()
+                    outDir = f'{analysisDir}/occVunocc'
+                    os.makedirs(outDir, exist_ok=True)
+                    fig.savefig(os.path.join(outDir, f'allLayers_{occluder}_occInvIdx.pdf'), dpi=300)
+                    plt.show()
+                    plt.close()
+
+                    allIdxPlot[1, mod, occ, :] = means
+
+        colours = [['darkgreen', 'limegreen'], ['darkgoldenrod', 'gold']]
+        for i, (idx, id) in enumerate(zip(['object completion', 'occlusion invariance'], ['OCI','OII'])):
+            ylims = [(-.5, .7),(-.25,.8)][i]
+            yticks = [(-.4, -.2, 0, .2, .4, .6),(-.2,0, .2,.4,.6)][i]
+            plt.figure(figsize=(5, 3))
+            for t, trainingName in enumerate(['standard training', 'occlusion training']):
+                for mod, modelName in enumerate(['standard model', 'high-recurrence']):
+                    plt.plot(np.arange(len(layers2use)), allIdxPlot[i,mod,t,:], marker='o', markerfacecolor='white', color=colours[t][mod], label=f'{trainingName}\n{modelName}')
+            fig = plt.gcf()
+            ax = plt.gca()
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            plt.tick_params(direction='in')
+            plt.xticks(np.arange(len(layers2use)), labels=layers2use, size=12)
+            plt.yticks(yticks, size=12)
+            plt.xlabel('model layer', size=12)
+            plt.ylabel(id, size=12)
+            plt.ylim(ylims)
+            plt.title(idx, size=16)
+            plt.legend(title='', bbox_to_anchor=(1.04, 1), loc="upper left", frameon=False, fontsize=12)
+            plt.tight_layout()
+            outDir = f'DNN/analysis/results/RSAfMRIstim/{version}/'
+            os.makedirs(outDir, exist_ok=True)
+            fig.savefig(os.path.join(outDir, f'cornet_s_varRec_{id}.pdf'), dpi=300)
+            plt.show()
+            plt.close()
+
+
+# make plot of effective RF size
+
+imSize = 224
+cycles = [[2,2,4,2],[5,5,10,5]]
+RFsizes = np.empty(shape=(2,4))
+for recLevel in range(2):
+    RFsize = 1
+    for l, layer in enumerate(cycles[recLevel]):
+        for cycle in range(layer):
+            print()
+            RFsize += 4
+        RFsizes[recLevel, l] = min(1, RFsize/imSize)
+
+plt.plot(np.arange(len(layers2use)), RFsizes[0], label = 'standard CORnet-S')
+plt.plot(np.arange(len(layers2use)), RFsizes[1], label = 'high-recurrence CORnet-S')
+fig = plt.gcf()
+fig.set_size_inches(6, 2.25)
+ax = plt.gca()
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+plt.tick_params(direction='in')
+plt.xticks(np.arange(len(layers2use)), labels=layers2use, size=12)
+plt.yticks(np.arange(0,.6,.1), size=12)
+plt.xlabel('model layer', size=12)
+plt.ylabel('RF size / image size', size=12)
+plt.ylim((0, .5))
+plt.title('effective RF size', size=12)
+plt.legend(title='', bbox_to_anchor=(1.04, 1), loc="upper left", frameon=False, fontsize=10)
+plt.tight_layout()
+outDir = f'/home/dave/Desktop'
+fig.savefig(os.path.join(outDir, f'RFsize_cornet_s_varRec.pdf'), dpi=300)
+plt.show()
+plt.close()
+
+
+cycles = [[2,2,4,2],[5,5,10,5]]
+totalConvs = np.empty(shape=(2,4))
+for recLevel in range(2):
+    convs = 0
+    for l, layer in enumerate(cycles[recLevel]):
+        convs += layer
+        totalConvs[recLevel, l] = convs
+
+
+plt.plot(np.arange(len(layers2use)), totalConvs[0], label = 'standard CORnet-S')
+plt.plot(np.arange(len(layers2use)), totalConvs[1], label = 'high-recurrence CORnet-S')
+fig = plt.gcf()
+fig.set_size_inches(6, 2.25)
+ax = plt.gca()
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+plt.tick_params(direction='in')
+plt.xticks(np.arange(len(layers2use)), labels=layers2use, size=12)
+plt.yticks(np.arange(0,26,5), size=12)
+plt.xlabel('model layer', size=12)
+plt.ylabel('cycles', size=12)
+plt.ylim((0, 25))
+plt.title('cumulative recurrent cycles', size=12)
+plt.legend(title='', bbox_to_anchor=(1.04, 1), loc="upper left", frameon=False, fontsize=10)
+plt.tight_layout()
+outDir = f'/home/dave/Desktop'
+fig.savefig(os.path.join(outDir, f'Cycles_cornet_s_varRec.pdf'), dpi=300)
+plt.show()
+plt.close()
+
+
