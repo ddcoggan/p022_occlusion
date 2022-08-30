@@ -119,14 +119,14 @@ for analysis in config:
             for occluder in config[analysis][modelName][dataset]['occluders']:
 
                 if type(occluder) is list:
-                    occluderString = 'mixedOccluders'
+                    occluderString = 'mixedOccluders' # if different occluder types are used simultaneously
                 else:
                     occluderString = occluder
 
                 for coverage in config[analysis][modelName][dataset]['coverages']:
 
                     if type(coverage) is list:
-                        coverageString = 'mixedLevels'
+                        coverageString = 'mixedLevels' # if different occluder levels are used simultaneously
                     else:
                        coverageString = str(int(coverage*100))
 
