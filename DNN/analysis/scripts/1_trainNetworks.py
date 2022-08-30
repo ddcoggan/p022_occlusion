@@ -68,10 +68,14 @@ config = {'allAlexnet': {'alexnet': {'imagenet16': {'occluders': occluders, 'cov
                              'inception_v3': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
                              'PredNetImageNet': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}}},
                              '''
-config = {#'cornet_s_varRec_2_2_4_2': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2]}}},
+config = {#'cornet_s_varRec_1_1_1_1': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [1,1,1,1]}}}}
+          #'cornet_s_varRec_2_2_4_2': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2]}}},
           #'cornet_s_varRec_5_5_10_5': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [5,5,10,5]}}},
           #'cornet_s_varRec_1_1_1_1': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [1,1,1,1]}}}}
-          'cornet_s_varRec_varRF_2_2_4_2-3_3_3_3': {'cornet_s_varRec_varRF': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2], 'RF': [3,3,3,3]}}}}
+          'cornet_s_varRec_varRF_2_2_4_2-9': {'cornet_s_varRec_varRF': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2], 'RF': 9}}},
+          'cornet_s_varRec_varRF_2_2_4_2-7': {'cornet_s_varRec_varRF': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2], 'RF': 7}}},
+          'cornet_s_varRec_varRF_2_2_4_2-5': {'cornet_s_varRec_varRF': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2], 'RF': 5}}}}
+
 learningRate = .001
 optimizerName = 'SGD'
 batchSizes = {'alexnet': 1024,
