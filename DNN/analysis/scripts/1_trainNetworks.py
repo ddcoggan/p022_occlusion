@@ -2,82 +2,83 @@ import os
 import glob
 import sys
 
-if os.uname().nodename == 'finn':
-    masterScriptsDir = '/mnt/HDD12TB/masterScripts'
-    datasetsDir = '/home/dave/Datasets'
-elif os.uname().nodename == 'u110380':
-    masterScriptsDir = '/home/exx/Dave/masterScripts'
-    datasetsDir = '/home/exx/Datasets'
-sys.path.append(f'{masterScriptsDir}/DNN')
+sys.path.append(f'{os.path.expanduser("~")}/Dave/masterScripts/DNN')
 from train import train
 import time
 #time.sleep(18000)
 
-nGPUs = 1 # target number of GPUs. Overwritten for known 1 GPU networks, set as -1 for all.
-GPUids = 1 # specify GPUs to use if not all are/can be used
-
+printTheseParams = ['modelName','times','RF','dataset','occluder', 'lastEpoch']
 overwrite = False
 
-noise=False
-indCoverages = [.1,.2,.4,.8]
+# set default / general parameters
+config = {'modelParams': {'pretrained': False},
+          'datasetParams': {'propOccluded': .8,
+                            'colours': [(0,0,0),(127,127,127),(255,255,255)],
+                            'invert': False},
+          'trainingParams': {'learningRate': .01,
+                             'optimizerName': 'SGD',
+                             'nEpochs': 25,
+                             'skipZeroth': False,
+                             'workers': 8,
+                             'nGPUs': 1,
+                             'GPUids': 0}}
+
+
+# list various occluder types and levels
 occluders = []
 for x in sorted(glob.glob('DNN/images/occluders/*')):
         occluders.append(os.path.basename(x))
 occluders.append('unoccluded')
+
 occludersFMRI = ['barHorz04','barVert12','barHorz08']
-occludersNoLevels = ['unoccluded','naturalTextured','naturalTextured2']
 occludersBehavioural = ['barHorz04', 'barVert04', 'barObl04', 'mudSplash', 'polkadot','polkasquare','crossBarOblique','crossBarCardinal', 'naturalUntexturedCropped2']
+occludersNoLevels = ['naturalTextured','naturalTextured2']
 occludersWithLevels = occluders
 for o in occludersNoLevels:
     occludersWithLevels.remove(o)
+occludersWithLevels.remove('unoccluded')
 
-skipZeroth = False
-nEpochs = 25
-workers = 8
-pretrained = True
-colours = [(0,0,0),(127,127,127),(255,255,255)]
-invert=False
-propOccluded = 0.8
-cycles=3 # currently just for prednet
-momentum=.9 # currently just for prednet
-weight_decay=1e-4 # currently just for prednet
+# standard coverage levels
+indCoverages = [.1,.2,.4,.8]
 
 '''
-config = {'allAlexnet': {'alexnet': {'imagenet16': {'occluders': occluders, 'coverages': indCoverages}}},
-          'mixedTypesMixedLevels': {'vgg19': {'imagenet16': {'occluders': [occludersBehavioural], 'coverages': [indCoverages]}}},
-          'mixedLevelsMixedBlur': {'alexnet': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}}},
-          'mixedLevels': {#'resnet18': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                          #'resnet34': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                          #'resnet50': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                          #'resnet101': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                          'resnet152': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                          'vgg19': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                          'cornet_s': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                          'PredNetImageNet': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                          'inception_v3': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                          'alexnet': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}}},
-                                      #'imagenet1000': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}}},
-          'fMRIandNatural': {'alexnet': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                             'cornet_s': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                             #'resnet18': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                             #'resnet34': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                             #'resnet50': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                             #'resnet101': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                             'resnet152': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                             'vgg19': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                             'inception_v3': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                             'PredNetImageNet': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}}},
-                             '''
-config = {#'cornet_s_varRec_1_1_1_1': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [1,1,1,1]}}}}
-          #'cornet_s_varRec_2_2_4_2': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2]}}},
-          #'cornet_s_varRec_5_5_10_5': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [5,5,10,5]}}},
-          #'cornet_s_varRec_1_1_1_1': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [1,1,1,1]}}}}
-          'cornet_s_varRec_varRF_2_2_4_2-9': {'cornet_s_varRec_varRF': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2], 'RF': 9}}},
-          'cornet_s_varRec_varRF_2_2_4_2-7': {'cornet_s_varRec_varRF': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2], 'RF': 7}}},
-          'cornet_s_varRec_varRF_2_2_4_2-5': {'cornet_s_varRec_varRF': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2], 'RF': 5}}}}
+analyses = {'allAlexnet': {'alexnet': {'imagenet16': {'occluders': occluders, 'coverages': indCoverages}}},
+            'mixedTypes_mixedLevels': {'vgg19': {'imagenet16': {'occluders': [occludersBehavioural], 'coverages': [indCoverages]}}},
+            'mixedLevels_mixedBlur': {'alexnet': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}}},
+            'mixedLevels': {#'resnet18': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
+                            #'resnet34': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
+                            #'resnet50': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
+                            #'resnet101': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
+                            'resnet152': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
+                            'vgg19': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
+                            'cornet_s': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
+                            'PredNetImageNet': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
+                            'inception_v3': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
+                            'alexnet': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}}},
+                                        #'imagenet1000': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}}},
+            'fMRIandNatural': {'alexnet': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
+                               'cornet_s': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
+                               #'resnet18': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
+                               #'resnet34': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
+                               #'resnet50': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
+                               #'resnet101': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
+                               'resnet152': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
+                               'vgg19': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
+                               'inception_v3': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
+                               'PredNetImageNet': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}}},
+'''
+#analyses = {'test': {'alexnet': {'imagenet16': {'occluders': ['unoccluded']}}}}
 
-learningRate = .001
-optimizerName = 'SGD'
+analyses = {#'cornet_s_varRec_1_1_1_1': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [1,1,1,1]}}}}
+            'cornet_s_varRec_2_2_4_2': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2]}}}}
+            #'cornet_s_varRec_5_5_10_5': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [5,5,10,5]}}}}
+            #'cornet_s_varRec_1_1_1_1': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [1,1,1,1]}}}}
+            #'cornet_s_varRec_2_2_4_2': {'cornet_s_varRec': {'imagenet16': {'occluders': ['unoccluded'], 'coverages': [.5], 'times': [2,2,4,2]}}}}
+            #'cornet_s_varRec_varRF_2_2_4_2-3': {'cornet_s_varRec': {'imagenet16': {'occluders': ['unoccluded'], 'coverages': [.5], 'times': [2,2,4,2], 'RF': 3}}}}
+            #'cornet_s_varRec_varRF_2_2_4_2-9': {'cornet_s_varRec_varRF': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2], 'RF': 9}}}}
+            #'cornet_s_varRec_varRF_2_2_4_2-7': {'cornet_s_varRec_varRF': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2], 'RF': 7}}}}
+            #'cornet_s_varRec_varRF_2_2_4_2-5': {'cornet_s_varRec_varRF': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2], 'RF': 5}}}}
+
 batchSizes = {'alexnet': 1024,
               'vgg19': 128,
               'cornet_s': 256,
@@ -91,107 +92,121 @@ batchSizes = {'alexnet': 1024,
               'inception_v3': 32,
               'PredNetImageNet': 8}
 
+for analysis in analyses:
 
-for analysis in config:
+    for modelName in analyses[analysis]:
 
-    for modelName in config[analysis]:
+        config['modelParams']['modelName'] = modelName
 
         # force 1 gpu for certain networks
         if modelName.startswith('cornet') or modelName in ['PredNetImageNet']:
-            nGPUs=1
+            config['trainingParams']['nGPUs']=1
 
+        # force pretrained for certain networks
+        if modelName in ['cornet_s_varRec', 'cornet_s_varRec_varRF']:
+            config['modelParams']['pretrained'] = False
+        elif modelName in 'PredNetImageNet':
+            config['modelParams']['pretrained'] = False
 
-        batchSize = batchSizes[modelName]
+        # set pretrained string
+        if config['modelParams']['pretrained']:
+            pretrainedString = 'fromPretrained'
+        else:
+            pretrainedString = 'fromScratch'
 
-        for dataset in config[analysis][modelName]:
+        # get batch size
+        config['trainingParams']['batchSize'] = batchSizes[modelName]
 
-            datasetPath = f'{datasetsDir}/{dataset}'
+        for dataset in analyses[analysis][modelName]:
 
-            times = None
-            RF=None
+            config['datasetParams']['datasetPath'] = f'{os.path.expanduser("~")}/Datasets/{dataset}'
+            config['datasetParams']['datasetName'] = dataset
+
             modelNameFull = modelName
             if modelName.startswith('cornet_s_varRec'):
-                times = config[analysis][modelName][dataset]['times']
+                config['modelParams']['times'] = analyses[analysis][modelName][dataset]['times']
                 modelNameFull = analysis
                 if modelName.endswith('varRF'):
-                    RF = config[analysis][modelName][dataset]['RF']
+                    config['modelParams']['RF'] = analyses[analysis][modelName][dataset]['RF']
 
-            for occluder in config[analysis][modelName][dataset]['occluders']:
+            for occluder in analyses[analysis][modelName][dataset]['occluders']:
 
+                config['datasetParams']['occluder'] = occluder
                 if type(occluder) is list:
                     occluderString = 'mixedOccluders' # if different occluder types are used simultaneously
                 else:
                     occluderString = occluder
 
-                for coverage in config[analysis][modelName][dataset]['coverages']:
+                if occluder == 'unoccluded':
+                    coverages = [None]
+                    coverageString = ['no coverage']
 
+                elif occluder in occludersNoLevels:
+                    coverages = [None]
+                    coverageString = ['all occluders']
+                else:
+                    coverages = analyses[analysis][modelName][dataset]['coverages']
+
+                outDir = os.path.join('DNN/data', modelNameFull, dataset, pretrainedString, occluder)
+
+                for coverage in coverages:
+
+                    # set up out dir based on occlusion, blur, noise
+
+                    # occlusion
                     if type(coverage) is list:
                         coverageString = 'mixedLevels' # if different occluder levels are used simultaneously
+                    elif coverage:
+                        coverageString = str(int(coverage*100))
+
+                    if coverage:
+                        outDir = os.path.join(outDir, coverageString)
+                        config['datasetParams']['coverage'] = coverage
+
+                    # blur
+                    if 'mixedBlur' in analysis:
+                        outDir += '_mixedBlur'
+                        config['datasetParams']['blur'] = True
+                        config['datasetParams']['blurSigmas'] = [0, 1, 2, 4, 8],
+                        config['datasetParams']['blurWeights'] = [.2, .2, .2, .2, .2]
                     else:
-                       coverageString = str(int(coverage*100))
+                        config['datasetParams']['blur'] = False
 
-                    if occluder in occludersNoLevels:
-                        outDir = os.path.join('DNN/data', modelNameFull, dataset, 'fromPretrained', occluder)
+                    # noise
+                    if 'mixedNoise' in analysis:
+                        outDir += '_mixedNoise'
+                        config['datasetParams']['noise'] = True
+                        config['datasetParams']['noiseLevels'] = [1,.8,.4,.2,.1]
                     else:
-                        outDir = os.path.join('DNN/data', modelNameFull, dataset, 'fromPretrained', occluderString, coverageString)
+                        config['datasetParams']['noise'] = False
 
-                    if analysis.endswith('MixedBlur'):
-                        outDir += 'MixedBlur'
-                        blur = True
+                    config['modelParams']['outDir'] = outDir
+
+                    if os.path.exists(f'{outDir}/plotStats.pkl'):
+                        import shutil
+                        shutil.copy(f'{outDir}/plotStats.pkl', f'{outDir}/plots/plotStats.pkl')
+
+                    # get most recent params file if possible
+                    paramsPaths = sorted(glob.glob(os.path.join(outDir, 'params/*.pt')))
+                    if paramsPaths and not overwrite:
+                        config['modelParams']['lastEpoch'] = int(os.path.basename(paramsPaths[-1])[:-3])
                     else:
-                        blur = False
-
-
-                    # get restart from file if necessary
-                    weightFiles = sorted(glob.glob(os.path.join(outDir, 'params/*.pt')))
-                    if 0 < len(weightFiles) and overwrite == False:
-                        restartFrom = weightFiles[-1]
-                    else:
-                        restartFrom = None
-
-                    # print out these values during training
-                    printOut = {'model': modelNameFull,
-                                'dataset': dataset,
-                                'occluder': occluder,
-                                'coverage': str(coverage)}
+                        config['modelParams']['lastEpoch'] = None
 
                     # call script
-                    if len(weightFiles) < nEpochs+1 or overwrite:
+                    if len(paramsPaths) < config['trainingParams']['nEpochs']+1 or overwrite:
 
-                        # set GPUs first
-                        if nGPUs == 1:
+                        # set GPUs
+                        if config['trainingParams']['nGPUs'] == 1:
                             os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-                            os.environ["CUDA_VISIBLE_DEVICES"] = f'{GPUids}'
+                            os.environ["CUDA_VISIBLE_DEVICES"] = f"{config['trainingParams']['GPUids']}"
 
-                        train(modelName=modelName,
-                              model=None,
-                              datasetPath=datasetPath,
-                              pretrained=pretrained,
-                              learningRate=learningRate,
-                              optimizerName=optimizerName,
-                              batchSize=batchSize,
-                              nEpochs=nEpochs,
-                              restartFrom = restartFrom,
-                              workers=workers,
-                              outDir=outDir,
-                              occlude=True,
-                              occlusionMethod=occluder,
-                              coverage=coverage,
-                              propOccluded=propOccluded,
-                              colour=colours,
-                              invert=invert,
-                              cycles=cycles,
-                              momentum=momentum,
-                              weight_decay=weight_decay,
-                              printOut=printOut,
-                              blur=blur,
-                              blurSigmas = [0,1,2,4,8],
-                              blurWeights=[.2,.2,.2,.2,.2],
-                              noise=noise,
-                              noiseLevels=[1,.8,.4,.2,.1],
-                              times=times,
-                              RF=RF,
-                              nGPUs=nGPUs,
-                              GPUids=GPUids,
-                              skipZeroth=skipZeroth)
+                        # create config dictionary
+                        config['printOut'] = {}
+                        for param in printTheseParams:
+                            for set in config:
+                                if param in config[set]:
+                                    config['printOut'][param] = config[set][param]
 
+                        # train
+                        train(**config)
