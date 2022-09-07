@@ -20,7 +20,7 @@ config = {'modelParams': {'pretrained': False},
                              'nEpochs': 25,
                              'skipZeroth': False,
                              'workers': 8,
-                             'nGPUs': 1,
+                             'nGPUs': -1,
                              'GPUids': 1}}
 
 
@@ -67,12 +67,12 @@ analyses = {'allAlexnet': {'alexnet': {'imagenet16': {'occluders': occluders, 'c
                                'inception_v3': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
                                'PredNetImageNet': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}}},
 '''
-#analyses = {'test': {'alexnet': {'imagenet16': {'occluders': ['unoccluded']}}}}
+analyses = {'test': {'alexnet': {'imagenet1000': {'occluders': ['unoccluded']}}}}
 
-analyses = {#'cornet_s_varRec_1_1_1_1': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [1,1,1,1]}}}}
+#analyses = {#'cornet_s_varRec_1_1_1_1': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [1,1,1,1]}}}}
             #'cornet_s_varRec_2_2_4_2': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2]}}}}
             #'cornet_s_varRec_5_5_10_5': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [5,5,10,5]}}}}
-            'cornet_s_varRec_varRF_2_2_4_2-5': {'cornet_s_varRec_varRF': {'imagenet1000': {'occluders': ['barHorz08'], 'coverages': [.5], 'times': [2,2,4,2], 'RF': 5}}}}
+#            'cornet_s_varRec_varRF_2_2_4_2-5': {'cornet_s_varRec_varRF': {'imagenet1000': {'occluders': ['barHorz08'], 'coverages': [.5], 'times': [2,2,4,2], 'RF': 5}}}}
 
 batchSizes = {'alexnet': 1024,
               'vgg19': 128,
