@@ -21,7 +21,7 @@ config = {'modelParams': {'pretrained': False},
                              'skipZeroth': False,
                              'workers': 8,
                              'nGPUs': 1,
-                             'GPUids': 0}}
+                             'GPUids': 1}}
 
 
 # list various occluder types and levels
@@ -69,8 +69,8 @@ analyses = {'allAlexnet': {'alexnet': {'imagenet16': {'occluders': occluders, 'c
 '''
 #analyses = {'test': {'alexnet': {'imagenet1000': {'occluders': ['unoccluded']}}}}
 
-analyses = {'cornet_s_custom_Rec1-2-4-2_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (3,3,3,3)}}}}
-            #'cornet_s_varRec_2_2_4_2': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2]}}}}
+analyses = {#'cornet_s_custom_Rec1-2-4-2_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (3,3,3,3)}}}}
+            'cornet_s_custom_Rec2-4-8-4_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['unoccluded'], 'coverages': [.5], 'times': (2,4,8,4), 'RF': (3,3,3,3)}}}}
             #'cornet_s_varRec_5_5_10_5': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [5,5,10,5]}}}}
 #            'cornet_s_varRec_varRF_2_2_4_2-5': {'cornet_s_varRec_varRF': {'imagenet1000': {'occluders': ['barHorz08'], 'coverages': [.5], 'times': [2,2,4,2], 'RF': 5}}}}
 
