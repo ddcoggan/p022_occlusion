@@ -20,8 +20,8 @@ config = {'modelParams': {'pretrained': False},
                              'nEpochs': 25,
                              'skipZeroth': False,
                              'workers': 8,
-                             'nGPUs': -1,
-                             'GPUids': 1}}
+                             'nGPUs': 1,
+                             'GPUids': 0}}
 
 
 # list various occluder types and levels
@@ -67,9 +67,9 @@ analyses = {'allAlexnet': {'alexnet': {'imagenet16': {'occluders': occluders, 'c
                                'inception_v3': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
                                'PredNetImageNet': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}}},
 '''
-analyses = {'test': {'alexnet': {'imagenet1000': {'occluders': ['unoccluded']}}}}
+#analyses = {'test': {'alexnet': {'imagenet1000': {'occluders': ['unoccluded']}}}}
 
-#analyses = {#'cornet_s_varRec_1_1_1_1': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [1,1,1,1]}}}}
+analyses = {'cornet_s_custom_Rec1-2-4-2_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (3,3,3,3)}}}}
             #'cornet_s_varRec_2_2_4_2': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [2,2,4,2]}}}}
             #'cornet_s_varRec_5_5_10_5': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [5,5,10,5]}}}}
 #            'cornet_s_varRec_varRF_2_2_4_2-5': {'cornet_s_varRec_varRF': {'imagenet1000': {'occluders': ['barHorz08'], 'coverages': [.5], 'times': [2,2,4,2], 'RF': 5}}}}
@@ -78,7 +78,7 @@ batchSizes = {'alexnet': 1024,
               'vgg19': 128,
               'cornet_s': 256,
               'cornet_s_varRec': 8,
-              'cornet_s_varRec_varRF': 8,
+              'cornet_s_custom': 32,
               'resnet18': 512,
               'resnet34': 256,
               'resnet50': 64,
@@ -98,7 +98,7 @@ for analysis in analyses:
             config['trainingParams']['nGPUs']=1
 
         # force pretrained for certain networks
-        if modelName in ['cornet_s_varRec', 'cornet_s_varRec_varRF']:
+        if modelName in ['cornet_s_varRec', 'cornet_s_custom']:
             config['modelParams']['pretrained'] = False
         elif modelName in 'PredNetImageNet':
             config['modelParams']['pretrained'] = False
@@ -118,11 +118,10 @@ for analysis in analyses:
             config['datasetParams']['datasetName'] = dataset
 
             modelNameFull = modelName
-            if modelName.startswith('cornet_s_varRec'):
+            if modelName.startswith('cornet_s_'):
                 config['modelParams']['times'] = analyses[analysis][modelName][dataset]['times']
                 modelNameFull = analysis
-                if modelName.endswith('varRF'):
-                    config['modelParams']['RF'] = analyses[analysis][modelName][dataset]['RF']
+                config['modelParams']['RF'] = analyses[analysis][modelName][dataset]['RF']
 
             for occluder in analyses[analysis][modelName][dataset]['occluders']:
 
