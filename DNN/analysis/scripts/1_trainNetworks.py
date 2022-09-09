@@ -18,16 +18,15 @@ config = {'modelParams': {'pretrained': False},
           'trainingParams': {'learningRate': .01,
                              'optimizerName': 'SGD',
                              'nEpochs': 25,
-                             'skipZeroth': False,
-                             'workers': 8,
+                             'workers': 1,
                              'nGPUs': 1,
-                             'GPUids': 1}}
+                             'GPUids': 0}}
 
 
 # list various occluder types and levels
 occluders = []
 for x in sorted(glob.glob('DNN/images/occluders/*')):
-        occluders.append(os.path.basename(x))
+    occluders.append(os.path.basename(x))
 occluders.append('unoccluded')
 
 occludersFMRI = ['barHorz04','barVert12','barHorz08']
@@ -69,16 +68,17 @@ analyses = {'allAlexnet': {'alexnet': {'imagenet16': {'occluders': occluders, 'c
 '''
 #analyses = {'test': {'alexnet': {'imagenet1000': {'occluders': ['unoccluded']}}}}
 
-analyses = {#'cornet_s_custom_Rec1-2-4-2_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (3,3,3,3)}}}}
-            'cornet_s_custom_Rec2-4-8-4_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['unoccluded'], 'coverages': [.5], 'times': (2,4,8,4), 'RF': (3,3,3,3)}}}}
-            #'cornet_s_varRec_5_5_10_5': {'cornet_s_varRec': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': [5,5,10,5]}}}}
-#            'cornet_s_varRec_varRF_2_2_4_2-5': {'cornet_s_varRec_varRF': {'imagenet1000': {'occluders': ['barHorz08'], 'coverages': [.5], 'times': [2,2,4,2], 'RF': 5}}}}
+analyses = {#'cornet_s_custom_Rec1-1-1-1_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,1,1,1), 'RF': (3,3,3,3)}}}}
+            #'cornet_s_custom_Rec1-2-4-2_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (3,3,3,3)}}}}
+            #'cornet_s_custom_Rec2-4-8-4_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (2,4,8,4), 'RF': (3,3,3,3)}}}}
+            #'cornet_s_custom_Rec1-2-4-2_RF5-5-5-5': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (5,5,5,5)}}}}
+            'cornet_s_custom_predify_Rec1-2-4-2_RF3-3-3-3': {'cornet_s_custom_predify': {'imagenet1000': {'occluders': ['unoccluded'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (3,3,3,3)}}}}
 
 batchSizes = {'alexnet': 1024,
               'vgg19': 128,
               'cornet_s': 256,
-              'cornet_s_varRec': 8,
-              'cornet_s_custom': 32,
+              'cornet_s_custom': 64,
+              'cornet_s_custom_predify': 64,
               'resnet18': 512,
               'resnet34': 256,
               'resnet50': 64,
@@ -98,7 +98,7 @@ for analysis in analyses:
             config['trainingParams']['nGPUs']=1
 
         # force pretrained for certain networks
-        if modelName in ['cornet_s_varRec', 'cornet_s_custom']:
+        if modelName.startswith('cornet_s_custom'):
             config['modelParams']['pretrained'] = False
         elif modelName in 'PredNetImageNet':
             config['modelParams']['pretrained'] = False
@@ -111,6 +111,11 @@ for analysis in analyses:
 
         # get batch size
         config['trainingParams']['batchSize'] = batchSizes[modelName]
+
+        # remove warnings for predified networks
+        if modelName.endswith('predify'):
+            import warnings
+            warnings.simplefilter("ignore")
 
         for dataset in analyses[analysis][modelName]:
 
