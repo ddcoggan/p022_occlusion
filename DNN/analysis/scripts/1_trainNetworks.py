@@ -7,10 +7,10 @@ from train import train
 import time
 #time.sleep(18000)
 
-printTheseParams = ['modelName','times','RF','dataset','occluder', 'lastEpoch']
 overwrite = False
 
 # set default / general parameters
+printTheseParams = ['modelName','times','RF','dataset','occluder', 'lastEpoch']
 config = {'modelParams': {'pretrained': False},
           'datasetParams': {'propOccluded': .8,
                             'colours': [(0,0,0),(127,127,127),(255,255,255)],
