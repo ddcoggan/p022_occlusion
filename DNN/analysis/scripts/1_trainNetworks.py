@@ -19,8 +19,8 @@ config = {'modelParams': {'pretrained': False},
           'trainingParams': {'learningRate': .01,
                              'optimizerName': 'SGD',
                              'nEpochs': 25,
-                             'workers': 1,
-                             'nGPUs': 1,
+                             'workers': 2,
+                             'nGPUs': -1,
                              'GPUids': 1}}
 
 
@@ -67,13 +67,13 @@ analyses = {'allAlexnet': {'alexnet': {'imagenet16': {'occluders': occluders, 'c
                                'inception_v3': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
                                'PredNetImageNet': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}}},
 '''
-#analyses = {'test': {'alexnet': {'imagenet1000': {'occluders': ['unoccluded']}}}}
+analyses = {'test': {'alexnet': {'imagenet1000': {'occluders': ['unoccluded']}}}}
 
-analyses = {#'cornet_s_custom_Rec1-1-1-1_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,1,1,1), 'RF': (3,3,3,3)}}}}
+#analyses = {#'cornet_s_custom_Rec1-1-1-1_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,1,1,1), 'RF': (3,3,3,3)}}}}
             #'cornet_s_custom_Rec1-2-4-2_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (3,3,3,3)}}}}
             #'cornet_s_custom_Rec2-4-8-4_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (2,4,8,4), 'RF': (3,3,3,3)}}}}
             #'cornet_s_custom_Rec1-2-4-2_RF5-5-5-5': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (5,5,5,5)}}}}
-            'cornet_s_custom_predify_Rec1-2-4-2_RF3-3-3-3': {'cornet_s_custom_predify': {'imagenet1000': {'occluders': ['barHorz08'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (3,3,3,3)}}}}
+            #'cornet_s_custom_predify_Rec1-2-4-2_RF3-3-3-3': {'cornet_s_custom_predify': {'imagenet1000': {'occluders': ['barHorz08'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (3,3,3,3)}}}}
 
 batchSizes = {'alexnet': 1024,
               'vgg19': 128,
