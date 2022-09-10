@@ -10,7 +10,7 @@ import time
 overwrite = False
 
 # set default / general parameters
-printTheseParams = ['modelName','times','RF','dataset','occluder', 'lastEpoch']
+printTheseParams = ['modelName','times','RF','occluder']
 config = {'modelParams': {'pretrained': False},
           'datasetParams': {'propOccluded': .8,
                             'colours': [(0,0,0),(127,127,127),(255,255,255)],
