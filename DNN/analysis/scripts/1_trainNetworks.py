@@ -1,6 +1,7 @@
 import os
 import glob
 import sys
+import datetime
 
 sys.path.append(f'{os.path.expanduser("~")}/Dave/masterScripts/DNN')
 from train import train
@@ -20,7 +21,7 @@ config = {'modelParams': {'pretrained': False},
                              'nEpochs': 25,
                              'workers': 1,
                              'nGPUs': 1,
-                             'GPUids': 0}}
+                             'GPUids': 1}}
 
 
 # list various occluder types and levels
@@ -72,7 +73,7 @@ analyses = {#'cornet_s_custom_Rec1-1-1-1_RF3-3-3-3': {'cornet_s_custom': {'image
             #'cornet_s_custom_Rec1-2-4-2_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (3,3,3,3)}}}}
             #'cornet_s_custom_Rec2-4-8-4_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (2,4,8,4), 'RF': (3,3,3,3)}}}}
             #'cornet_s_custom_Rec1-2-4-2_RF5-5-5-5': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (5,5,5,5)}}}}
-            'cornet_s_custom_predify_Rec1-2-4-2_RF3-3-3-3': {'cornet_s_custom_predify': {'imagenet1000': {'occluders': ['unoccluded'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (3,3,3,3)}}}}
+            'cornet_s_custom_predify_Rec1-2-4-2_RF3-3-3-3': {'cornet_s_custom_predify': {'imagenet1000': {'occluders': ['barHorz08'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (3,3,3,3)}}}}
 
 batchSizes = {'alexnet': 1024,
               'vgg19': 128,
@@ -201,11 +202,17 @@ for analysis in analyses:
                             os.environ["CUDA_VISIBLE_DEVICES"] = f"{config['trainingParams']['GPUids']}"
 
                         # create config dictionary
-                        config['printOut'] = {}
+                        printOut = {}
                         for param in printTheseParams:
                             for set in config:
                                 if param in config[set]:
-                                    config['printOut'][param] = config[set][param]
+                                    printOut[param] = config[set][param]
+
+                        # print out config information
+                        printString = f'Started at {datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")}'
+                        for p in printOut:
+                            printString += f' | {p}: {printOut[p]}'
+                        print(printString)
 
                         # train
                         train(**config)
