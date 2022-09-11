@@ -19,10 +19,17 @@ config = {'modelParams': {'pretrained': False},
           'trainingParams': {'learningRate': .01,
                              'optimizerName': 'SGD',
                              'nEpochs': 25,
-                             'workers': 2,
-                             'nGPUs': -1,
+                             'workers': 8,
+                             'nGPUs': 1,
                              'GPUids': 1}}
 
+#analyses = {'test': {'alexnet': {'imagenet1000': {'occluders': ['unoccluded']}}}}
+analyses = {'cornet_s_custom_Rec1-1-1-1_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,1,1,1), 'RF': (3,3,3,3)}}}}
+            #'cornet_s_custom_Rec1-2-4-2_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (3,3,3,3)}}}}
+            #'cornet_s_custom_Rec2-4-8-4_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (2,4,8,4), 'RF': (3,3,3,3)}}}}
+            #'cornet_s_custom_Rec1-2-4-2_RF5-5-5-5': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (5,5,5,5)}}}}
+            #'cornet_s_custom_Rec1-2-4-2_RF7-7-7-7': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (7,7,7,7)}}}}
+            #'cornet_s_custom_predify_Rec1-2-4-2_RF3-3-3-3': {'cornet_s_custom_predify': {'imagenet1000': {'occluders': ['barHorz08'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (3,3,3,3)}}}}
 
 # list various occluder types and levels
 occluders = []
@@ -40,40 +47,6 @@ occludersWithLevels.remove('unoccluded')
 
 # standard coverage levels
 indCoverages = [.1,.2,.4,.8]
-
-'''
-analyses = {'allAlexnet': {'alexnet': {'imagenet16': {'occluders': occluders, 'coverages': indCoverages}}},
-            'mixedTypes_mixedLevels': {'vgg19': {'imagenet16': {'occluders': [occludersBehavioural], 'coverages': [indCoverages]}}},
-            'mixedLevels_mixedBlur': {'alexnet': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}}},
-            'mixedLevels': {#'resnet18': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                            #'resnet34': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                            #'resnet50': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                            #'resnet101': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                            'resnet152': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                            'vgg19': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                            'cornet_s': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                            'PredNetImageNet': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                            'inception_v3': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                            'alexnet': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}}},
-                                        #'imagenet1000': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}}},
-            'fMRIandNatural': {'alexnet': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                               'cornet_s': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                               #'resnet18': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                               #'resnet34': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                               #'resnet50': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                               #'resnet101': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                               'resnet152': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                               'vgg19': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                               'inception_v3': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                               'PredNetImageNet': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}}},
-'''
-analyses = {'test': {'alexnet': {'imagenet1000': {'occluders': ['unoccluded']}}}}
-
-#analyses = {#'cornet_s_custom_Rec1-1-1-1_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,1,1,1), 'RF': (3,3,3,3)}}}}
-            #'cornet_s_custom_Rec1-2-4-2_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (3,3,3,3)}}}}
-            #'cornet_s_custom_Rec2-4-8-4_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (2,4,8,4), 'RF': (3,3,3,3)}}}}
-            #'cornet_s_custom_Rec1-2-4-2_RF5-5-5-5': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (5,5,5,5)}}}}
-            #'cornet_s_custom_predify_Rec1-2-4-2_RF3-3-3-3': {'cornet_s_custom_predify': {'imagenet1000': {'occluders': ['barHorz08'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (3,3,3,3)}}}}
 
 batchSizes = {'alexnet': 1024,
               'vgg19': 128,
@@ -216,3 +189,30 @@ for analysis in analyses:
 
                         # train
                         train(**config)
+
+'''
+analyses = {'allAlexnet': {'alexnet': {'imagenet16': {'occluders': occluders, 'coverages': indCoverages}}},
+            'mixedTypes_mixedLevels': {'vgg19': {'imagenet16': {'occluders': [occludersBehavioural], 'coverages': [indCoverages]}}},
+            'mixedLevels_mixedBlur': {'alexnet': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}}},
+            'mixedLevels': {#'resnet18': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
+                            #'resnet34': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
+                            #'resnet50': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
+                            #'resnet101': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
+                            'resnet152': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
+                            'vgg19': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
+                            'cornet_s': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
+                            'PredNetImageNet': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
+                            'inception_v3': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
+                            'alexnet': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}}},
+                                        #'imagenet1000': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}}},
+            'fMRIandNatural': {'alexnet': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
+                               'cornet_s': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
+                               #'resnet18': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
+                               #'resnet34': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
+                               #'resnet50': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
+                               #'resnet101': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
+                               'resnet152': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
+                               'vgg19': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
+                               'inception_v3': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
+                               'PredNetImageNet': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}}},
+'''
