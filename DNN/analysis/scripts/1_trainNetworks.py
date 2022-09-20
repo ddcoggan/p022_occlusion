@@ -18,13 +18,13 @@ config = {'modelParams': {'pretrained': False},
                             'invert': False},
           'trainingParams': {'learningRate': .01,
                              'optimizerName': 'SGD',
-                             'nEpochs': 25,
+                             'nEpochs': 32,
                              'workers': 8,
                              'nGPUs': 1,
                              'GPUids': 1}}
 
 #analyses = {'test': {'alexnet': {'imagenet1000': {'occluders': ['unoccluded']}}}}
-analyses = {'cornet_s_custom_Rec1-1-1-1_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,1,1,1), 'RF': (3,3,3,3)}}}}
+analyses = {'cornet_s_custom_Rec1-1-1-1_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['unoccluded'], 'coverages': [.5], 'times': (1,1,1,1), 'RF': (3,3,3,3)}}}}
             #'cornet_s_custom_Rec1-2-4-2_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (3,3,3,3)}}}}
             #'cornet_s_custom_Rec2-4-8-4_RF3-3-3-3': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (2,4,8,4), 'RF': (3,3,3,3)}}}}
             #'cornet_s_custom_Rec1-2-4-2_RF5-5-5-5': {'cornet_s_custom': {'imagenet1000': {'occluders': ['barHorz08', 'unoccluded'], 'coverages': [.5], 'times': (1,2,4,2), 'RF': (5,5,5,5)}}}}
@@ -52,7 +52,7 @@ batchSizes = {'alexnet': 1024,
               'vgg19': 128,
               'cornet_s': 256,
               'cornet_s_custom': 64,
-              'cornet_s_custom_predify': 64,
+              'cornet_s_custom_predify': 128,
               'resnet18': 512,
               'resnet34': 256,
               'resnet50': 64,

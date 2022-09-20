@@ -13,10 +13,6 @@ from sklearn.linear_model import LinearRegression
 import time
 #time.sleep(3600)
 
-sys.path.append('/mnt/HDD12TB/masterScripts/DNN')
-from saveOutputs import saveOutputs
-from centreCropResize import centreCropResize
-
 ### CONFIGURATION
 models = ['cornet_s_varRec_2_2_4_2', 'cornet_s_varRec_5_5_10_5']#['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'alexnet', 'cornet_s', 'inception_v3', 'vgg19', 'PredNetImageNet']
 datasets = ['imagenet1000'] #, 'places365_standard', 'imagenet16'],
