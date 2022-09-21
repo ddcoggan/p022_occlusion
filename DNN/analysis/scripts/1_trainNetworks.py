@@ -119,8 +119,8 @@ if m['lastEpoch'] is None or m['lastEpoch'] < t['nEpochs']:
                     printString += f' | {param}: {config[thisDict][param]}'
         else:
             thisDict, thisSubdict, thisParam = param.split('.')
-            if thisDict in config and thisParam in config[thisDict]:
-                printString += f' | {thisParam}: {config[thisDict][thisParam]}'
+            if thisDict in config and thisParam in config[thisDict][thisSubdict]:
+                printString += f' | {thisParam}: {config[thisDict][thisSubdict][thisParam]}'
     print(printString)
 
     # train

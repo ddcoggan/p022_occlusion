@@ -23,7 +23,7 @@ from brainscore import score_model
 
 overwrite = False
 modelDir = 'DNN/data'
-modelSearch = 'cornet_s_custom*'
+modelSearch = 'cornet_s_custom_*'
 modelDirs = sorted(glob.glob(f'{modelDir}/{modelSearch}'))
 modelArcs = [os.path.basename(i) for i in modelDirs]
 occTypeTrain = ['unoccluded','barHorz08']
@@ -94,7 +94,7 @@ for modelDir, modelArc in zip(modelDirs, modelArcs):
 
                         # get model with this architecture
                         if not modelLoaded:
-                            config = {'modelName': modelName, 'times': recs, 'RF': kernels, 'pretrained': False}
+                            config = {'modelName': modelName, 'R': recs, 'K': kernels, 'pretrained': False}
                             model = getModel(**config)
                             modelLoaded = True
 
