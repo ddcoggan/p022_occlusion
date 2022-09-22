@@ -6,7 +6,7 @@ import time
 #time.sleep(18000)
 
 sys.path.append(f'{os.path.expanduser("~")}/Dave/masterScripts/DNN')
-from train import train
+
 
 ### CONFIGURATION ###
 
@@ -24,7 +24,7 @@ visibilities = [.1,.2,.4,.8]
 m = { # model parameters
     'modelName': 'cornet_s_custom',
     'R': (1,2,4,2), # recurrence (cornet_s_custom)
-    'K': (3,3,3,3), # kernel size (cornet_s_custom)
+    'K': (5,5,5,5), # kernel size (cornet_s_custom)
     }
 d = { # dataset parameters
     'dataset': 'ILSVRC2012',
@@ -36,11 +36,11 @@ t = { # training parameters
     'optimizerName': 'SGD',
     'nEpochs': 32,
     'nGPUs': 1,  # set to -1 to use all available GPUs, 0 to use CPU
-    'GPUids': 0,  # ignored if nGPUs in [-1,0]
+    'GPUids': 1,  # ignored if nGPUs in [-1,0]
     'learningRate': 2**-7,
     'batchSize': 2**5
     }
-printTheseParams = ['modelName','R','K','datasetParams.occlusion.label']
+printTheseParams = ['modelName','R','K']
 
 ### END OF CONFIGURATION ###
 
@@ -128,4 +128,5 @@ if m['lastEpoch'] is None or m['lastEpoch'] < t['nEpochs']:
     print(printString)
 
     # train
+    from train import train
     train(**config)
