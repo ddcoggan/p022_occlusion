@@ -17,24 +17,22 @@ occludersNoLevels = ['naturalTextured','naturalTextured1','naturalTextured2']
 visibilities = [.1,.2,.4,.8]
 
 # model (modelName*, model, R, K, pretrained, outDir, lastEpoch)
-m = {
+# dataset (path*,occlusion{type,label,propOccluded,visibility,colour,label},
+#          blur{sigmas,weights,label}, sigmas: [0, 1, 2, 4, 8]
+#          noise{type,ssnr,label}) ssnr: [.1,.2,.4,.8,1]
+# training (optimizerName*, nEpochs*, nGPUs, GPUids, learningRate*, batchSize*, workers)
+m = { # model parameters
     'modelName': 'cornet_s_custom',
     'R': (1,2,4,2), # recurrence (cornet_s_custom)
     'K': (3,3,3,3), # kernel size (cornet_s_custom)
     }
-
-# dataset (path*,occlusion{type,label,propOccluded,visibility,colour,label},
-#          blur{sigmas,weights,label}, sigmas: [0, 1, 2, 4, 8]
-#          noise{type,ssnr,label}) ssnr: [.1,.2,.4,.8,1]
-d = {
+d = { # dataset parameters
     'dataset': 'ILSVRC2012',
     'occlusion': {'type': occludersBehavioural,'label': 'behaviouralOccs',
                   'propOccluded': .8,'visibility': visibilities, 'visLabel': 'mixedVis',
                   'colour': [(0,0,0),(127,127,127),(255,255,255)]}
     }
-
-# training (optimizerName*, nEpochs*, nGPUs, GPUids, learningRate, batchSize, workers)
-t = {
+t = { # training parameters
     'optimizerName': 'SGD',
     'nEpochs': 32,
     'nGPUs': 1,  # set to -1 to use all available GPUs, 0 to use CPU
@@ -42,15 +40,16 @@ t = {
     'learningRate': 2**-7,
     'batchSize': 2**5
     }
-
 printTheseParams = ['modelName','R','K','datasetParams.occlusion.label']
 
 ### END OF CONFIGURATION ###
 
 
-# set pretrained to False by default and enforce no pretraining for some models
+# set pretrained to False by default
 if not 'pretrained' in m:
     m['pretrained'] = False
+
+# enforce no pretraining for some models
 elif m['pretrained'] and m['modelName'] in ['cornet_s_custom', 'cornet_s_custom_predify']:
     UserWarning(f"Pretrained weights for {m['modelName']} are not available, training from random initialized weights instead.")
     m['pretrained'] = False
@@ -65,16 +64,21 @@ if 'outDir' not in m:
     pathItems += [d['dataset'], pretrainedString]
 
     # image distortions
-    imageDist = 'unaltered'
-    if 'occlusion' in d:
-        try: imageDist = d['occlusion']['label']
-        except: imageDist = d['occlusion']['type']
-        try: imageDist += f"_vis-{d['occlusion']['visLabel']}"
-        except: imageDist += f"_vis-{int(d['occlusion']['visibility']*100):02}"
-    if 'blur' in d:
-        imageDist = f"__{d['blur']['label']}"
-    if 'noise' in d:
-        imageDist += f"__{d['noise']['label']}"
+    if 'occlusion' not in d and 'blur' not in d and 'noise' not in d:
+        imageDist = 'unaltered'
+    else:
+        if 'occlusion' in d:
+            try: imageDist = d['occlusion']['label']
+            except: imageDist = d['occlusion']['type']
+            try: imageDist += f"_vis-{d['occlusion']['visLabel']}"
+            except: imageDist += f"_vis-{int(d['occlusion']['visibility']*100):02}"
+        else:
+            imageDist = 'unoccluded'
+        if 'blur' in d:
+            imageDist = f"__blur-{d['blur']['label']}"
+        if 'noise' in d:
+            imageDist += f"__noise-{d['noise']['label']}"
+
     pathItems += [imageDist]
 
     m['outDir'] = 'DNN/data'
@@ -125,30 +129,3 @@ if m['lastEpoch'] is None or m['lastEpoch'] < t['nEpochs']:
 
     # train
     train(**config)
-
-'''
-analyses = {'allAlexnet': {'alexnet': {'imagenet16': {'occluders': occluders, 'coverages': indCoverages}}},
-            'mixedTypes_mixedLevels': {'vgg19': {'imagenet16': {'occluders': [occludersBehavioural], 'coverages': [indCoverages]}}},
-            'mixedLevels_mixedBlur': {'alexnet': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}}},
-            'mixedLevels': {#'resnet18': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                            #'resnet34': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                            #'resnet50': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                            #'resnet101': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                            'resnet152': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                            'vgg19': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                            'cornet_s': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                            'PredNetImageNet': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                            'inception_v3': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}},
-                            'alexnet': {'imagenet16': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}}},
-                                        #'imagenet1000': {'occluders': occludersWithLevels, 'coverages': [indCoverages]}}},
-            'fMRIandNatural': {'alexnet': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                               'cornet_s': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                               #'resnet18': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                               #'resnet34': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                               #'resnet50': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                               #'resnet101': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                               'resnet152': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                               'vgg19': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                               'inception_v3': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}},
-                               'PredNetImageNet': {'imagenet16': {'occluders': occludersFMRI + occludersNoLevels, 'coverages': [.5]}}},
-'''
