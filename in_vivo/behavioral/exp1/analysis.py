@@ -20,17 +20,25 @@ from itertools import product as itp
 plt.rcParams.update(custom_defaults)
 from scipy.optimize import curve_fit
 
-all_trials_path = 'analysis/trials.parquet'
-curve_params_path = f'analysis/robustness_curves.parquet'
+data_dir = op.expanduser('~/david/projects/p022_occlusion/data/in_vivo/behavioral/exp1')
+all_trials_path = f'{data_dir}/analysis/trials.parquet'
+curve_params_path = f'{data_dir}/analysis/robustness_curves.parquet'
+noise_ceiling_path = f'{data_dir}/analysis/noise_ceiling.csv'
 
 def main():
-    #collate_trials()
-    #fit_performance_curves()
+    collate_trials()
+    fit_performance_curves()
     make_plots()
-    #calculate_noise_ceiling()
+    calculate_noise_ceiling()
 
 
 class CFG:
+
+    """
+    This class contains useful details about the stimulus conditions and
+    commonly used objects and constants, e.g. condition-color mappings, to keep
+    plots consistent across human and model analysis pipelines.
+    """
 
     # object classes
     classes_orig = [
@@ -87,140 +95,148 @@ class CFG:
         class_dir in class_dirs]
     """
 
-    subjects = sorted([int(op.basename(x)) for x in glob.glob('data/*') if
-                       op.isdir(x)])
+    subjects = sorted([int(op.basename(x)) for x in glob.glob(
+        f'{data_dir}data/*') if op.isdir(x)])
 
 
 def collate_trials():
 
-    all_trials = pd.DataFrame()
-    for subject in CFG.subjects:
-        trials_path = f'data/{subject}/trials.csv'
-        trials = pd.read_csv(trials_path, index_col=0)
-        trials['subject'] = subject
-        trials['trial'] = trials.index + 1
-        trials.rename(columns={'response': 'prediction',
-                               'occluder': 'occluder_class',
-                               'colour': 'occluder_color',
-                               'class': 'object_class'}, inplace=True)
-        trials.occluder_class = trials.occluder_class.replace(
-            {'unoccluded': 'none'})
-        trials.occluder_color = trials.occluder_color.replace(
-            {np.nan: 'none'})
-        all_trials = pd.concat([all_trials, trials])
-    all_trials.reset_index(drop=True, inplace=True)
-    all_trials['stimulus_id'] = [f'{t+1:05}' for t in range(len(all_trials))]
-    all_trials['visibility'] = all_trials['visibility'].round(1)
-    all_trials['object_animacy'] = ['animate' if c in CFG.animate_classes
-        else 'inanimate' for c in all_trials['object_class']]
-    all_trials.to_parquet(all_trials_path, index=False)
+    """
+    This function combines the trial data from all subjects into a single
+    dataframe, with some minor adjustments to align with broader conventions
+    across experiments. The resulting dataframe is saved as a parquet file.
+    """
+
+    if not op.isfile(all_trials_path):
+        all_trials = pd.DataFrame()
+        for subject in CFG.subjects:
+            trials_path = f'{data_dir}/data/{subject}/trials.csv'
+            trials = pd.read_csv(trials_path, index_col=0)
+            trials['subject'] = subject
+            trials['trial'] = trials.index + 1
+            trials.rename(columns={'response': 'prediction',
+                                   'occluder': 'occluder_class',
+                                   'colour': 'occluder_color',
+                                   'class': 'object_class'}, inplace=True)
+            trials.occluder_class = trials.occluder_class.replace(
+                {'unoccluded': 'none'})
+            trials.occluder_color = trials.occluder_color.replace(
+                {np.nan: 'none'})
+            all_trials = pd.concat([all_trials, trials])
+        all_trials.reset_index(drop=True, inplace=True)
+        all_trials['stimulus_id'] = [f'{t+1:05}' for t in range(len(all_trials))]
+        all_trials['visibility'] = all_trials['visibility'].round(1)
+        all_trials['object_animacy'] = ['animate' if c in CFG.animate_classes
+            else 'inanimate' for c in all_trials['object_class']]
+        all_trials.to_parquet(all_trials_path, index=False)
 
 
 def fit_performance_curves():
 
-    all_trials = pd.read_parquet(all_trials_path)
-    curve_params = pd.DataFrame()
+    if not op.isfile(curve_params_path):
+        all_trials = pd.read_parquet(all_trials_path)
+        curve_params = pd.DataFrame()
 
-    for metric, (level, subject_sample) in itp(
-            ['accuracy', 'RT'], zip(['individual', 'group'],
-                                    [CFG.subjects, ['group']])):
+        for metric, (level, subject_sample) in itp(
+                ['accuracy', 'RT'], zip(['individual', 'group'],
+                                        [CFG.subjects, ['group']])):
 
-        if level == 'individual':
-            performance = (all_trials.groupby(
-                ['subject', 'occluder_class', 'occluder_color',
-                 'visibility'], dropna=False)
-               .agg('mean', numeric_only=True).reset_index())
-        else:  # if level == 'group'
-            performance = (all_trials.groupby(
-                ['occluder_class', 'occluder_color', 'visibility'], dropna=False)
-                .agg('mean', numeric_only=True).reset_index())
-            performance['subject'] = 'group'
+            if level == 'individual':
+                performance = (all_trials.groupby(
+                    ['subject', 'occluder_class', 'occluder_color',
+                     'visibility'], dropna=False)
+                   .agg('mean', numeric_only=True).reset_index())
+            else:  # if level == 'group'
+                performance = (all_trials.groupby(
+                    ['occluder_class', 'occluder_color', 'visibility'], dropna=False)
+                    .agg('mean', numeric_only=True).reset_index())
+                performance['subject'] = 'group'
 
-        # condition-wise curve params and thresholds
-        for subject, occluder_class, occluder_color in itertools.product(
-                subject_sample, CFG.occluder_classes, CFG.occluder_colors):
+            # condition-wise curve params and thresholds
+            for subject, occluder_class, occluder_color in itertools.product(
+                    subject_sample, CFG.occluder_classes, CFG.occluder_colors):
 
-            perf_unocc = performance[
-                (performance.visibility == 1) &
-                (performance.subject == subject)][metric].item()
+                perf_unocc = performance[
+                    (performance.visibility == 1) &
+                    (performance.subject == subject)][metric].item()
 
-            perf_occ = (performance[
-                (performance.occluder_class == occluder_class) &
-                (performance.occluder_color == occluder_color) &
-                (performance.subject == subject)]
-                .sort_values('visibility')[metric].to_list())
+                perf_occ = (performance[
+                    (performance.occluder_class == occluder_class) &
+                    (performance.occluder_color == occluder_color) &
+                    (performance.subject == subject)]
+                    .sort_values('visibility')[metric].to_list())
 
-            if metric == 'accuracy':
-                xvals = [0] + CFG.visibilities + [1]
-                yvals = np.array(
-                    [1/8] + list(perf_occ) + [perf_unocc])
-            else:  # if metric == 'RT'
-                xvals = CFG.visibilities + [1]
-                yvals = np.array(list(perf_occ) + [perf_unocc])
-            init_params = [max(yvals), np.median(xvals), 1, 0]
-            curve_x = np.linspace(0, 1, 1000)
-            try:
-                popt, pcov = curve_fit(
-                    sigmoid, xvals, yvals, init_params, maxfev=100000)
-                curve_y = sigmoid(curve_x, *popt)
-                threshold = sum(curve_y < .5) / 1000
-            except:
-                popt = [np.nan] * 4
-                threshold = np.nan
+                if metric == 'accuracy':
+                    xvals = [0] + CFG.visibilities + [1]
+                    yvals = np.array(
+                        [1/8] + list(perf_occ) + [perf_unocc])
+                else:  # if metric == 'RT'
+                    xvals = CFG.visibilities + [1]
+                    yvals = np.array(list(perf_occ) + [perf_unocc])
+                init_params = [max(yvals), np.median(xvals), 1, 0]
+                curve_x = np.linspace(0, 1, 1000)
+                try:
+                    popt, pcov = curve_fit(
+                        sigmoid, xvals, yvals, init_params, maxfev=100000)
+                    curve_y = sigmoid(curve_x, *popt)
+                    threshold = sum(curve_y < .5) / 1000
+                except:
+                    popt = [np.nan] * 4
+                    threshold = np.nan
 
-            curve_params = pd.concat(
-                [curve_params, pd.DataFrame({
-                    'subject': [str(subject)],
-                    'occluder_class': [occluder_class],
-                    'occluder_color': [occluder_color],
-                    'metric': [metric],
-                    'L': [popt[0]],
-                    'x0': [popt[1]],
-                    'k': [popt[2]],
-                    'b': [popt[3]],
-                    'threshold_50': [threshold],
-                    'mean': [np.mean(perf_occ)]
-                })]).reset_index(drop=True)
+                curve_params = pd.concat(
+                    [curve_params, pd.DataFrame({
+                        'subject': [str(subject)],
+                        'occluder_class': [occluder_class],
+                        'occluder_color': [occluder_color],
+                        'metric': [metric],
+                        'L': [popt[0]],
+                        'x0': [popt[1]],
+                        'k': [popt[2]],
+                        'b': [popt[3]],
+                        'threshold_50': [threshold],
+                        'mean': [np.mean(perf_occ)]
+                    })]).reset_index(drop=True)
 
-        # mean curve across all conditions
-        for subject in subject_sample:
+            # mean curve across all conditions
+            for subject in subject_sample:
 
-            perf = (performance[performance.subject == subject]
-                .sort_values('visibility')[metric].to_list())
+                perf = (performance[performance.subject == subject]
+                    .sort_values('visibility')[metric].to_list())
 
-            if metric == 'accuracy':
-                xvals = [0] + CFG.visibilities + [1]
-                yvals = np.array([1/8] + perf)
-            else:  # if metric == 'RT'
-                xvals = CFG.visibilities + [1]
-                yvals = np.array(perf)
-            init_params = [max(yvals), np.median(xvals), 1, 0]
-            curve_x = np.linspace(0, 1, 1000)
-            try:
-                popt, pcov = curve_fit(
-                    sigmoid, xvals, yvals, init_params, maxfev=100000)
-                curve_y = sigmoid(curve_x, *popt)
-                threshold = sum(curve_y < .5) / 1000
-            except:
-                popt = [np.nan] * 4
-                threshold = np.nan
+                if metric == 'accuracy':
+                    xvals = [0] + CFG.visibilities + [1]
+                    yvals = np.array([1/8] + perf)
+                else:  # if metric == 'RT'
+                    xvals = CFG.visibilities + [1]
+                    yvals = np.array(perf)
+                init_params = [max(yvals), np.median(xvals), 1, 0]
+                curve_x = np.linspace(0, 1, 1000)
+                try:
+                    popt, pcov = curve_fit(
+                        sigmoid, xvals, yvals, init_params, maxfev=100000)
+                    curve_y = sigmoid(curve_x, *popt)
+                    threshold = sum(curve_y < .5) / 1000
+                except:
+                    popt = [np.nan] * 4
+                    threshold = np.nan
 
-            curve_params = pd.concat(
-                [curve_params, pd.DataFrame({
-                    'subject': [str(subject)],
-                    'occluder_class': ['all'],
-                    'occluder_color': ['all'],
-                    'metric': [metric],
-                    'L': [popt[0]],
-                    'x0': [popt[1]],
-                    'k': [popt[2]],
-                    'b': [popt[3]],
-                    'threshold_50': [threshold],
-                    'mean': [np.mean(perf[:-1])]
-                })]).reset_index(drop=True)
+                curve_params = pd.concat(
+                    [curve_params, pd.DataFrame({
+                        'subject': [str(subject)],
+                        'occluder_class': ['all'],
+                        'occluder_color': ['all'],
+                        'metric': [metric],
+                        'L': [popt[0]],
+                        'x0': [popt[1]],
+                        'k': [popt[2]],
+                        'b': [popt[3]],
+                        'threshold_50': [threshold],
+                        'mean': [np.mean(perf[:-1])]
+                    })]).reset_index(drop=True)
 
-    curve_params.subject = curve_params.subject.astype('category')
-    curve_params.to_parquet(curve_params_path, index=False)
+        curve_params.subject = curve_params.subject.astype('category')
+        curve_params.to_parquet(curve_params_path, index=False)
 
 
 def condwise_robustness_plot_array(df, metric,
@@ -317,7 +333,7 @@ def make_plots():
 
         curve_params = pd.read_parquet(curve_params_path)
 
-        outpath = f'analysis/plots/group_mean_{metric}.pdf'
+        outpath = f'{data_dir}/analysis/plots/group_mean_{metric}.pdf'
         condwise_robustness_plot_array(
             df=performance,
             df_curves=curve_params,
@@ -331,6 +347,12 @@ def make_plots():
 
 
 def calculate_noise_ceiling():
+
+    """
+    This function calculates the noise-ceiling, i.e., between-subject
+    reliability of condition-wise performance. There are several versions,
+    which include different combinations of dependent variables.
+    """
 
     all_trials = pd.read_parquet(all_trials_path)
     performance = (all_trials.groupby(
@@ -393,7 +415,7 @@ def calculate_noise_ceiling():
         'lwr': [lwr],
         'upr': [upr]})])
 
-    nc_df.to_csv('analysis/noise_ceiling.csv', index=False)
+    nc_df.to_csv(noise_ceiling_path, index=False)
 
 
 if __name__ == '__main__':
